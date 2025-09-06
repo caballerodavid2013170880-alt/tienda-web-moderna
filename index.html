@@ -565,56 +565,52 @@
             openModal(id);
         }
 
-        // Función para eliminar producto
-        function deleteProduct(id) {
-            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-                products = products.filter(p => p.id !== id);
-                renderProducts();
-                
-                // Aquí se conectaría con Firebase para eliminar de la base de datos
-                console.log('Producto eliminado:', id);
-            }
-        }
+      // Función actualizada para eliminar producto
+function deleteProduct(id) {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+        products = products.filter(p => p.id !== id);
+        renderProducts();
+        deleteProductFromFirebase(id);
+    }
+}
 
-        // Manejar envío del formulario
-        document.getElementById('productForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('productName').value;
-            const price = parseFloat(document.getElementById('productPrice').value);
-            const image = document.getElementById('productImage').value;
-            const rating = parseInt(document.getElementById('productRating').value);
-            
-            if (currentEditingId) {
-                // Editar producto existente
-                const productIndex = products.findIndex(p => p.id === currentEditingId);
-                products[productIndex] = {
-                    ...products[productIndex],
-                    name,
-                    price,
-                    image,
-                    rating
-                };
-                console.log('Producto actualizado:', products[productIndex]);
-            } else {
-                // Agregar nuevo producto
-                const newProduct = {
-                    id: Date.now(),
-                    name,
-                    price,
-                    image,
-                    rating,
-                    dateAdded: new Date().toISOString().split('T')[0]
-                };
-                products.push(newProduct);
-                console.log('Producto agregado:', newProduct);
-            }
-            
-            renderProducts();
-            closeModal();
-            
-            // Aquí se conectaría con Firebase para guardar en la base de datos
-        });
+// Manejar envío del formulario (ACTUALIZADO)
+document.getElementById('productForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('productName').value;
+    const price = parseFloat(document.getElementById('productPrice').value);
+    const image = document.getElementById('productImage').value;
+    const rating = parseInt(document.getElementById('productRating').value);
+    
+    if (currentEditingId) {
+        // Editar producto existente
+        const productIndex = products.findIndex(p => p.id === currentEditingId);
+        const updatedProduct = {
+            ...products[productIndex],
+            name,
+            price,
+            image,
+            rating
+        };
+        products[productIndex] = updatedProduct;
+        await saveProductToFirebase(updatedProduct);
+    } else {
+       // Agregar nuevo producto
+        const newProduct = {
+            name,
+            price,
+            image,
+            rating,
+            dateAdded: new Date().toISOString().split('T')[0]
+        };
+        products.push(newProduct);
+        await saveProductToFirebase(newProduct);
+    }
+    
+    renderProducts();
+    closeModal();
+});
 
         // Cerrar modal al hacer clic fuera
         document.getElementById('productModal').addEventListener('click', function(e) {
@@ -649,5 +645,75 @@
             }
         };
     </script>
+    <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+// Tu configuración de Firebase (REEMPLAZA con la tuya)
+const firebaseConfig = {
+  apiKey: "AIzaSyCdo6ApfROtpJjTkEye37l_PoYAdc1PGQI",
+  authDomain: "tienda-web-moderna.firebaseapp.com",
+  projectId: "tienda-web-moderna",
+  storageBucket: "tienda-web-moderna.firebasestorage.app",
+  messagingSenderId: "637596735374",
+  appId: "1:637596735374:web:e58c32f381c110922976df"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Función para cargar productos desde Firestore
+async function loadProductsFromFirebase() {
+    try {
+        const snapshot = await db.collection('productos').get();
+        if (!snapshot.empty) {
+            products = [];
+            snapshot.forEach(doc => {
+                products.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            renderProducts();
+        }
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+    }
+}
+
+// Función para guardar producto en Firestore
+async function saveProductToFirebase(product) {
+    try {
+        if (product.id && typeof product.id === 'string') {
+            // Actualizar producto existente
+            await db.collection('productos').doc(product.id).update(product);
+        } else {
+            // Agregar nuevo producto
+            const docRef = await db.collection('productos').add(product);
+            product.id = docRef.id;
+        }
+        console.log('Producto guardado en Firebase');
+    } catch (error) {
+        console.error('Error guardando producto:', error);
+    }
+}
+
+// Función para eliminar producto de Firestore
+async function deleteProductFromFirebase(productId) {
+    try {
+        await db.collection('productos').doc(productId).delete();
+        console.log('Producto eliminado de Firebase');
+    } catch (error) {
+        console.error('Error eliminando producto:', error);
+    }
+}
+
+// Cargar productos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductsFromFirebase();
+});
+</script>
 </body>
 </html>
