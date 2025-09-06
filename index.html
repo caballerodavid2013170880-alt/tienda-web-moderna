@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore - Tienda Moderna</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .admin-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toggle-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .toggle-btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .toggle-btn.active {
+            background: #4caf50;
+        }
+
+        .add-product-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 20px auto;
+            display: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .add-product-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            color: #4caf50;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .product-date {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stars {
+            color: #ffc107;
+            margin-right: 10px;
+        }
+
+        .rating-value {
+            color: #666;
+            font-weight: bold;
+        }
+
+        .admin-controls {
+            display: none;
+            padding: 15px 20px;
+            background: #f5f5f5;
+            border-top: 1px solid #eee;
+        }
+
+        .admin-controls.show {
+            display: block;
+        }
+
+        .admin-btn {
+            margin-right: 10px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #f57c00;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #45a049;
+        }
+
+        .cancel-btn {
+            background: #666;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #555;
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-toggle">
+        <button class="toggle-btn" onclick="toggleAdminMode()">
+            <span id="admin-text">Modo Admin</span>
+        </button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>TechStore</h1>
+            <p>Tu tienda de tecnología de confianza</p>
+        </header>
+
+        <div style="text-align: center;">
+            <button class="add-product-btn" id="addProductBtn" onclick="openModal()">
+                ➕ Agregar Producto
+            </button>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Los productos se cargan dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar productos -->
+    <div class="modal" id="productModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Agregar Producto</h2>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Nombre del Producto:</label>
+                    <input type="text" id="productName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productPrice">Precio ($):</label>
+                    <input type="number" id="productPrice" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productImage">URL de Imagen:</label>
+                    <input type="url" id="productImage" placeholder="https://ejemplo.com/imagen.jpg">
+                </div>
+                
+                <div class="form-group">
+                    <label for="productRating">Valoración (1-5):</label>
+                    <select id="productRating" required>
+                        <option value="">Seleccionar valoración</option>
+                        <option value="1">⭐ (1)</option>
+                        <option value="2">⭐⭐ (2)</option>
+                        <option value="3">⭐⭐⭐ (3)</option>
+                        <option value="4">⭐⭐⭐⭐ (4)</option>
+                        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                    </select>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn cancel-btn" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="modal-btn save-btn">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let isAdminMode = false;
+        let currentEditingId = null;
+        let products = [
+            {
+                id: 1,
+                name: "Smartphone Galaxy Pro",
+                price: 899.99,
+                image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400",
+                dateAdded: "2024-01-15",
+                rating: 5
+            },
+            {
+                id: 2,
+                name: "Laptop Gaming Elite",
+                price: 1299.99,
+                image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400",
+                dateAdded: "2024-01-20",
+                rating: 4
+            },
+            {
+                id: 3,
+                name: "Auriculares Inalámbricos",
+                price: 199.99,
+                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+                dateAdded: "2024-02-01",
+                rating: 4
+            },
+            {
+                id: 4,
+                name: "Tablet Ultra HD",
+                price: 549.99,
+                image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400",
+                dateAdded: "2024-02-10",
+                rating: 3
+            },
+            {
+                id: 5,
+                name: "Smartwatch Deportivo",
+                price: 299.99,
+                image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+                dateAdded: "2024-02-15",
+                rating: 5
+            },
+            {
+                id: 6,
+                name: "Cámara Digital 4K",
+                price: 799.99,
+                image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
+                dateAdded: "2024-02-20",
+                rating: 4
+            },
+            {
+                id: 7,
+                name: "Altavoz Bluetooth Premium",
+                price: 149.99,
+                image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400",
+                dateAdded: "2024-03-01",
+                rating: 4
+            },
+            {
+                id: 8,
+                name: "Teclado Mecánico RGB",
+                price: 129.99,
+                image: "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400",
+                dateAdded: "2024-03-05",
+                rating: 5
+            },
+            {
+                id: 9,
+                name: "Monitor 4K Ultra Wide",
+                price: 699.99,
+                image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400",
+                dateAdded: "2024-03-10",
+                rating: 4
+            },
+            {
+                id: 10,
+                name: "Drone con Cámara HD",
+                price: 449.99,
+                image: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400",
+                dateAdded: "2024-03-15",
+                rating: 3
+            }
+        ];
+
+        // Función para generar estrellas
+        function generateStars(rating) {
+            const fullStars = '⭐'.repeat(rating);
+            const emptyStars = '☆'.repeat(5 - rating);
+            return fullStars + emptyStars;
+        }
+
+        // Función para formatear fecha
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Función para renderizar productos
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card fade-in';
+                
+                productCard.innerHTML = `
+                    <div class="product-image" style="background-image: url('${product.image}'); background-size: cover; background-position: center;">
+                        ${!product.image ? '📱 Imagen no disponible' : ''}
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                        <div class="product-date">Agregado: ${formatDate(product.dateAdded)}</div>
+                        <div class="product-rating">
+                            <span class="stars">${generateStars(product.rating)}</span>
+                            <span class="rating-value">(${product.rating}/5)</span>
+                        </div>
+                    </div>
+                    <div class="admin-controls ${isAdminMode ? 'show' : ''}">
+                        <button class="admin-btn edit-btn" onclick="editProduct(${product.id})">Editar</button>
+                        <button class="admin-btn delete-btn" onclick="deleteProduct(${product.id})">Eliminar</button>
+                    </div>
+                `;
+                
+                grid.appendChild(productCard);
+            });
+        }
+
+        // Función para alternar modo admin
+        function toggleAdminMode() {
+            isAdminMode = !isAdminMode;
+            const toggleBtn = document.querySelector('.toggle-btn');
+            const adminText = document.getElementById('admin-text');
+            const addBtn = document.getElementById('addProductBtn');
+            const adminControls = document.querySelectorAll('.admin-controls');
+
+            if (isAdminMode) {
+                toggleBtn.classList.add('active');
+                adminText.textContent = 'Modo Usuario';
+                addBtn.style.display = 'block';
+                adminControls.forEach(control => control.classList.add('show'));
+            } else {
+                toggleBtn.classList.remove('active');
+                adminText.textContent = 'Modo Admin';
+                addBtn.style.display = 'none';
+                adminControls.forEach(control => control.classList.remove('show'));
+            }
+        }
+
+        // Función para abrir modal
+        function openModal(productId = null) {
+            const modal = document.getElementById('productModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const form = document.getElementById('productForm');
+            
+            currentEditingId = productId;
+            
+            if (productId) {
+                modalTitle.textContent = 'Editar Producto';
+                const product = products.find(p => p.id === productId);
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productImage').value = product.image;
+                document.getElementById('productRating').value = product.rating;
+            } else {
+                modalTitle.textContent = 'Agregar Producto';
+                form.reset();
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        // Función para cerrar modal
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+            currentEditingId = null;
+        }
+
+        // Función para editar producto
+        function editProduct(id) {
+            openModal(id);
+        }
+
+        // Función para eliminar producto
+        function deleteProduct(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                products = products.filter(p => p.id !== id);
+                renderProducts();
+                
+                // Aquí se conectaría con Firebase para eliminar de la base de datos
+                console.log('Producto eliminado:', id);
+            }
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const image = document.getElementById('productImage').value;
+            const rating = parseInt(document.getElementById('productRating').value);
+            
+            if (currentEditingId) {
+                // Editar producto existente
+                const productIndex = products.findIndex(p => p.id === currentEditingId);
+                products[productIndex] = {
+                    ...products[productIndex],
+                    name,
+                    price,
+                    image,
+                    rating
+                };
+                console.log('Producto actualizado:', products[productIndex]);
+            } else {
+                // Agregar nuevo producto
+                const newProduct = {
+                    id: Date.now(),
+                    name,
+                    price,
+                    image,
+                    rating,
+                    dateAdded: new Date().toISOString().split('T')[0]
+                };
+                products.push(newProduct);
+                console.log('Producto agregado:', newProduct);
+            }
+            
+            renderProducts();
+            closeModal();
+            
+            // Aquí se conectaría con Firebase para guardar en la base de datos
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('productModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProducts();
+        });
+
+        // Exportar funciones para Firebase (se usarán cuando se integre)
+        window.ProductManager = {
+            products,
+            renderProducts,
+            addProduct: (product) => {
+                products.push(product);
+                renderProducts();
+            },
+            updateProduct: (id, updatedProduct) => {
+                const index = products.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    products[index] = updatedProduct;
+                    renderProducts();
+                }
+            },
+            deleteProduct: (id) => {
+                products = products.filter(p => p.id !== id);
+                renderProducts();
+            }
+        };
+    </script>
+</body>
+</html>
